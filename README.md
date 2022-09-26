@@ -41,7 +41,7 @@ The [record](#social-media-record-file) is the only thing saved on the user's UP
 
 ![LOOKSO Architecture Overview](docs/img/arch_overview.jpg)
 
-There is a third actor whose role is to provide a reliable method to authenticate messages authors, just like a signature would do for EOAs, and to validate the timestamp for the messages in the network. It is a [validator](#validator) smart contract on the LUKSO blockchain and can be called to append the msg.sender and the current block timestamp to the message hash and save it in its own [ERC725Y](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-725.md#erc725y) storage for future validation.
+There is a third actor whose role is to provide a reliable method to authenticate messages authors, just like a signature would do for EOAs, and to validate the timestamp for the messages in the network. It is a [validator](#the-validator-contract) smart contract on the LUKSO blockchain and can be called to append the msg.sender and the current block timestamp to the message hash and save it in its own [ERC725Y](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-725.md#erc725y) storage for future validation.
 
 All the data is indexed in a local database and served as an API to speed up and simplify the queries necessary to provide a consistent and fast user experience. 
 
