@@ -37,7 +37,7 @@ As long as you have a Universal Profile, you have an account in LOOKSO. Other pr
 
 LOOKSO leverages decentralized storage to minimize gas costs and allow media content like images and videos to be attached to messages. Every message, like and follow is saved in the Arweave blockchain and a single record file is kept updated for each Universal Profile (UP). This social media record file is nothing more than a JSON object and is saved on the Universal Profile's (UP) storage.
 
-The [record](#Social Media Record File) is the only thing saved on the user's UP and contains a list of created posts, liked posts and followed UPs, which all together composes a user's social media state. 
+The [record](#social-media-record-file) is the only thing saved on the user's UP and contains a list of created posts, liked posts and followed UPs, which all together composes a user's social media state. 
 
 ![LOOKSO Architecture Overview](docs/img/arch_overview.jpg)
 
@@ -140,7 +140,7 @@ contract LooksoPostValidator is Validator {
 For more details on the format of the Social Media Record being pointed by the JSON Url, please refer to [LIP-social_media_feed](https://github.com/dropps-nft/Lookso/blob/main/LIPs/lip-social_media_feed.md).
 
 
-## Event scraping and translation
+# Event scraping and translation
 
 ![Event translation on feed](docs/img/event_post.jpg)
 
