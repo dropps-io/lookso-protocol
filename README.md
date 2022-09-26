@@ -6,7 +6,6 @@
 | Team | Samuel Videau, Carlos Caldas, António Pedro Silva |
 | Email | samuel@dropps.io, carlos@dropps.io, antonio@dropps.io |
 | App | https://lookso.io |
-| Code | [Frontend (private)](https://github.com/dropps-io/lookso/tree/lukso-hackathon), [Backend (private)](https://github.com/dropps-io/dropps-back/tree/lukso-hackathon), [Contracts](https://github.com/dropps-io/dropps-submission-build-up/tree/main/contracts)  |
 | Find us | [Website](https://dropps.io), [Twitter](https://twitter.com/dropps_io), [Discord](https://discord.gg/nzn3BGHyYH) |
 
 Ethereum address: 0x053C7c6bC6d4A47DAD5A2DE8AF6d2aA870B95168
@@ -20,15 +19,15 @@ As long as you have a Universal Profile, you have an account in LOOKSO. Other pr
 
 # Other repositories
 
-* [Back-end (private)](https://github.com/dropps-io/dropps-back/tree/lukso-hackathon)
-* [Front-end (private)](https://github.com/dropps-io/lookso/tree/lukso-hackathon)
+* [Back-end (private)](https://github.com/dropps-io/dropps-back)
+* [Front-end (private)](https://github.com/dropps-io/lookso)
 
 
 # Quick Reference
 
 * [Website](https://lookso.io)
-* [LIP-social_media_feed](https://github.com/dropps-io/dropps-submission-build-up/blob/main/LIPs/lip-social_media_feed.md)
-* [LIP-validator](https://github.com/dropps-io/dropps-submission-build-up/blob/main/LIPs/lip-validator.md)
+* [LIP-social_media_feed](https://github.com/dropps-io/social-media-protocol/blob/main/LIPs/lip-social_media_feed.md)
+* [LIP-validator](https://github.com/dropps-io/social-media-protocol/blob/main/LIPs/lip-validator.md)
 * [Youtube Video](https://youtu.be/lNljYm68qHI)
 
 # Architecure
@@ -59,41 +58,73 @@ pragma solidity ^0.8.7;
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { ERC725YCore } from "@erc725/smart-contracts/contracts/ERC725YCore.sol";
 import { OwnableUnset } from "@erc725/smart-contracts/contracts/custom/OwnableUnset.sol";
-import { GasLib } from "@erc725/smart-contracts/contracts/utils/GasLib.sol";
 
+/// @title A validator for hash values
+/// @author https://lookso.io
+/// @notice Acts as a registry that contains proof of authorship and creation date
+/// @dev The registry is saved according to the ERC725Y storage standard
 contract Validator is ERC725YCore(), Context {
 
     constructor() {
-        OwnableUnset._setOwner(address(0)); // No owner needed
+        _setOwner(address(0));
     }
 
-    function validate(bytes32 contentHash) external {
-        require( getData(contentHash).length == 0, 
-            "Corresponding value for this hash is not null. Content has been added under this hash before.");
-        // Write to the Key-Value Storage.
+    /**
+    * @notice Saves a hash value and appends a timestamp and an address to it
+    * @dev Uses block.timestamp to set a date and msgSender to set the address
+    * @param contentHash A hash value to validate
+    */ 
+    function validate(bytes32 contentHash) public {
         setData(contentHash, bytes(abi.encodePacked(address(_msgSender()), bytes12(uint96(block.timestamp)))));
     }
 
+    /**
+    * @dev Overrides parent function to remove onlyOwner modifier
+    * @notice Disallows setting a non-zero value
+    * @param dataKey Memory position to store the new value
+    * @param dataValue The value to be stored
+    */
     function setData(bytes32 dataKey, bytes memory dataValue) public virtual override {
+        require(getData(dataKey).length == 0, 
+            "Provided hash already maps to a non-null value.");
         _setData(dataKey, dataValue);
     }
 
+    /**
+    * @dev Overrides parent function to remove onlyOwner modifier
+    * @notice Allows setting multiple keys in one call
+    * @param dataKeys Memory positions to store the new value
+    * @param dataValues The values to be stored
+    */
     function setData(bytes32[] memory dataKeys, bytes[] memory dataValues)
         public
         virtual
         override
     {
         require(dataKeys.length == dataValues.length, "Keys length not equal to values length");
-        for (uint256 i = 0; i < dataKeys.length; i = GasLib.uncheckedIncrement(i)) {
+        for (uint256 i = 0; i < dataKeys.length; i++) {
             _setData(dataKeys[i], dataValues[i]);
         }
     }
 
+    /**
+    * @dev Uses the Left Shift operator to discard the bytes that do not correspond to the timestamp.
+    * The timestamp is saved right padded, in the 12 bytes left after storing the address 
+    * @notice Breaks down the 32 byte memory slot and retrieves the timestamp part
+    * @param key Memory positions to retrieve the value from
+    * @return The date when the key was registered in the validator in UNIX Timestamp form
+    */
     function getTimestamp(bytes32 key) public view returns(bytes12) {
         return bytes12(bytes32(this.getData(key)) << 160);
+        // return
     }
 
-    function getAddress(bytes32 key) public view returns (bytes20) {
+    /**
+    * @notice Breaks down the 32 bytes slot and retrieves the address part
+    * @param key Memory positions to retrieve the value from
+    * @return The address that registerd this key in the validator
+    */
+    function getSender(bytes32 key) public view returns (bytes20) {
         return bytes20(this.getData(key));
     }
 }
@@ -115,24 +146,37 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
 import { Validator } from "./Validator.sol";
 
+/**
+* @title LOOKSO post validator
+* @notice A validator tailored for Universal Profiles and content publishing
+* @author https://lookso.io
+* @dev Writes to the Universal Profile key/value store
+*/
 contract LooksoPostValidator is Validator {
 
     bytes32 public constant REGISTRY_KEY = keccak256("LSPXXSocialRegistry");
-  
+
     constructor() Validator() {}
 
+    /**
+    * @notice Universal Profile (message sender) makes a post
+    * @dev This contract must have permissions to write on the Universal Profile
+    * @param postHash Will be used as key in this contract's mapping
+    * @param jsonUrl Reference to the latest Social Media Record of the sender
+    */
     function post(bytes32 postHash, bytes calldata jsonUrl) public {
-        this.validate(postHash);
-        //Update the registry in the UP
+        // Save block.timestamp and msgSender().address under the key "postHash" in mapping.
+        validate(postHash);
+        //Update the registry reference in the UP
+        //// Verify sender supports the IERC725Y standard
         require(ERC165Checker.supportsERC165(_msgSender()), "Sender must implement ERC165. A UP does.");
         require(ERC165Checker.supportsInterface(_msgSender(), _INTERFACEID_ERC725Y), "Sender must implement IERC725Y (key/value store). A UP does");
 
         bytes memory encodedCall = abi.encodeWithSelector(
-            bytes4(keccak256(bytes("setData(bytes32,bytes)"))),
+            bytes4(keccak256(bytes("setData(bytes32,bytes)"))), //function.selector
             REGISTRY_KEY, jsonUrl
         );
-
-        ILSP6KeyManager( OwnableUnset(_msgSender()).owner() ).execute(encodedCall); // Execute through the Key Manager
+        ILSP6KeyManager( OwnableUnset(_msgSender()).owner() ).execute(encodedCall);
     }
 }
 ```
@@ -151,10 +195,10 @@ Events and their indexed parameters are saved on the backend database, alongside
 
 
 
-
 ## Decentralized Storage <img alt="Arweave Logo" src="docs/img/arweave_logo.png" width="25"></img>
 
 We chose Arweave because it's cheap, easy to use and provides the degree of decentralization and interoperability we are looking for. Arweave offers a GraphQL endpoint to query for transaction metadata, which is very useful to find all the content associated with a given protocol or app. Each transaction offers 2kb of queryable space in the form of key-value pairs (tags). Any application wanting to plug itself into the Social Media Network can simply query Arweave and look for the protocol tag in the transactions. Alternatively, a dApp can fetch the Social Media Record File from a Universal Profile, and from there display all the related content stored on Arweave.
+
 
 ## The Backend
 
@@ -246,7 +290,6 @@ This is an example of a post object. You can find more details about it in the [
 
 # Future improvements
 
-* Refactor following system so that universalReceiver can be called and a UP can decide what to do when it is being followed. Implement following like an nft transfer.
 * Add a relay service and improve the post flow. The user should sign the transaction to update the social record in his profile, but it should never go through unless the upload to decentralized storage is successful. On the other hand, we should not upload to decentralized storage first and then give the user the option to cancel the transaction. A relay service helps to manage this situation by postponing the signed transaction until the upload to decentralized storage is complete.
 * Improve event translation (for ex. Profile metadata updated can display the before and after values)
 * Narrow the permissions given to the validator contract for a specific key (LSPXXSocialRegistry).
