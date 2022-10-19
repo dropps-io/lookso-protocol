@@ -10,7 +10,7 @@ export async function setPermissions(up:any, keyManager:any, erc725:any, granted
 
     // 1. Updates AddressPermissions[] length
     keys.push(ethers.utils.keccak256(ethers.utils.toUtf8Bytes("AddressPermissions[]"))); 
-    let permissionsLength = (await (up.functions.getData(keys[0])))[0];
+    let permissionsLength = (await (up.functions["getData(bytes32)"](keys[0])))[0];
     let lengthBN = ethers.BigNumber.from(permissionsLength);
     let newLengthBN = lengthBN.add(1);
     values.push( ethers.utils.hexZeroPad((newLengthBN.toHexString()), 32));

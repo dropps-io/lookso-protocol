@@ -68,10 +68,11 @@ A Profile Post can be an original message, a comment on another post or a repost
 ```js
 {
   "LSPXXProfilePost": {
-    "version": "0.0.1",
+    "version": "0.0.1", // The Metadata version of this post
     "author": "Address", // The Universal Profile who authored the post
+    "locale": "string", // language code - Country Code (de_DE)
     "validator": "Address", // Address of a validator smart contract which will authenticate a post and provide its publication date
-    "nonce": "string", // Random value to avoid having same hash for different posts
+    "nonce": "string", // Random value to allow duplicates
     "message": "string", // The post original content
     "links": [
       {
@@ -84,15 +85,17 @@ A Profile Post can be an original message, a comment on another post or a repost
       "string",
       ...
     ],
-    "asset": { // Each post can have up to 1 media file attached
-      "hashFunction": "keccak256(bytes)",
-      "hash": "string",
-      "url": "string", 
-      "fileType": "string"
-    },
+    "assets": [ // Media attached to a post
+      {
+        "hashFunction": "keccak256(bytes)",
+        "hash": "string",
+        "url": "string", 
+        "fileType": "string"
+      }
+    ], 
     "parentHash": "string", // or null. A post with a parent is a comment
     "childHash": "string", // or null. A post with a child is a repost
-    "nonce":"string",
+    "app": "string", // The platform that originated this post
   },
   "LSPXXProfilePostHash": {// Hash of the LSPXXProfilePost object
     "hashFunction": 'keccak256(bytes)',
@@ -136,7 +139,7 @@ The post content and metadata is stored under  _LSPXXProfilePost_. The content a
 
 Let's breakdown the _LSPXXProfilePost_ attributes: 
 
-* **version** will allow clients that adhere to the protocol to display posts properly, even if some attributes change. 
+* **version** allows clients that adhere to the protocol to display posts according to their version
 * **message** is the actual content of a post that will be displayed as text.
 * **author** is the address of the Universal Profile that submitted the post.
 * **validator** is the address of the contract that timestamped this particular post. Use it to retrieve the post data.

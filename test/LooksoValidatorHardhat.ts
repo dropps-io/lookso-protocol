@@ -28,6 +28,7 @@ describe("LooksoPostValidator", function() {
   describe("Hardhat Network", function() {
 
     let hardhatProvider: Provider;
+    let validatorEventTopic: string[];
 
     before(async function() {
       // Get Provider
@@ -51,22 +52,37 @@ describe("LooksoPostValidator", function() {
 
     })
 
-    it("Stores the validation and saves the post on the UP", async function() {
+    it("Saves the post on the UP with the correct json url", async function() {
       tx = await callPost(postHash, jsonUrl, looksoPostValidator, keyManager); 
     })
 
-    it("Retrieves the correct timestamp of a post", async function() {
-      const txTimestamp = ( (await hardhatProvider.getBlock(tx.blockNumber)).timestamp );
-      const validatorTimestamp = (parseInt (await (looksoPostValidator["getTimestamp"](postHash))));
-      expect(validatorTimestamp).to.equal(txTimestamp);
+    it("Emits event 'newPost(bytes32 indexed postHash, address indexed author)' after a post is saved in the UP", async function() {
+      const receipt = await tx.wait();
+      const validatorEvents = (receipt.logs.filter(log => log.address == looksoPostValidator.address))
+      expect(validatorEvents.length).to.equal(1);
+      expect(validatorEvents[0].topics[0]).to.equal(ethers.utils.keccak256(ethers.utils.toUtf8Bytes("newPost(bytes32,address)")));
+      validatorEventTopic = validatorEvents[0].topics;
+      // const txTimestamp = ( (await hardhatProvider.getBlock(tx.blockNumber)).timestamp );
+      // const validatorTimestamp = (parseInt (await (looksoPostValidator["getTimestamp"](postHash))));
+      // expect(validatorTimestamp).to.equal(txTimestamp);
     })
 
-    it("Retrieves the correct author of a post", async function() {
-      expect(ethers.utils.getAddress(await (looksoPostValidator.getSender(postHash)))).to.equal(up.address)
+    it("Emits the event with the correct author", async function() {
+      // Position 0 is the hash of the eventName, 1 is the postHash and 2 is the author
+      const author = validatorEventTopic[2];
+      const authorAddress = "0x"+author.slice(26);
+      // ethers.utils.getAddress(address) returns the checksum format of an address
+      expect(ethers.utils.getAddress(authorAddress)).to.equal(up.address);
     })
 
-    it("Reverts when saving the same post hash twice", async function() {
-      await expect(callPost(postHash, jsonUrl, looksoPostValidator, keyManager)).to.be.reverted;
+    it("Emits the event with the correct postHash", async function() {
+      // Position 0 is the hash of the eventName, 1 is the postHash and 2 is the author
+      const _postHash = validatorEventTopic[1];
+      expect(_postHash).to.equal(postHash);
+    })
+
+    it("Emits event regardless of having emitted for that postHash before", async function() {
+      await expect(callPost(postHash, jsonUrl, looksoPostValidator, keyManager)).not.to.be.reverted;
     })
 
 
@@ -82,7 +98,8 @@ describe("LooksoPostValidator", function() {
     let up:any;
     const postHash = "0xebd6f888b589f38ab6d5d1da951dcb2c8146ae589ab46d452a4a986e524c0512";
     const jsonUrl = "0xaa0b2cdbb4ac4db5cc71238d6f3f77edc521b0106152b420f4dd1d39b145b12a";
-
+    let validatorEventTopic: string[];
+    
   before(async function() {
     // Get the provider
     luksoProvider = ethers.getDefaultProvider("https://rpc.l16.lukso.network");
@@ -104,22 +121,38 @@ describe("LooksoPostValidator", function() {
 
   })
 
-    it("Stores the validation and saves the post on the UP", async function() {
-      tx = await callPost(postHash, jsonUrl, looksoPostValidator, keyManager); 
+    it("Saves the post on the UP with the correct json url", async function() {
+      tx = callPost(postHash, jsonUrl, looksoPostValidator, keyManager); 
+      await expect(tx).not.to.be.reverted;
     })
 
-    it("Retrieves the correct timestamp of a post", async function() {
-      const txTimestamp = ( (await luksoProvider.getBlock(tx.blockNumber)).timestamp );
-      const validatorTimestamp = (parseInt (await (looksoPostValidator["getTimestamp"](postHash))));
-      expect(validatorTimestamp).to.equal(txTimestamp);
+    it("Emits event 'newPost(bytes32 indexed postHash, address indexed author)' after a post is saved in the UP", async function() {
+      const receipt = await tx;
+      const validatorEvents = (receipt.logs.filter(log => log.address == looksoPostValidator.address))
+      expect(validatorEvents.length).to.equal(1);
+      expect(validatorEvents[0].topics[0]).to.equal(ethers.utils.keccak256(ethers.utils.toUtf8Bytes("newPost(bytes32,address)")));
+      validatorEventTopic = validatorEvents[0].topics;
+      // const txTimestamp = ( (await hardhatProvider.getBlock(tx.blockNumber)).timestamp );
+      // const validatorTimestamp = (parseInt (await (looksoPostValidator["getTimestamp"](postHash))));
+      // expect(validatorTimestamp).to.equal(txTimestamp);
     })
 
-    it("Retrieves the correct author of a post", async function() {
-      expect(ethers.utils.getAddress(await (looksoPostValidator.getSender(postHash)))).to.equal(up.address)
+    it("Emits the event with the correct author", async function() {
+      // Position 0 is the hash of the eventName, 1 is the postHash and 2 is the author
+      const author = validatorEventTopic[2];
+      const authorAddress = "0x"+author.slice(26);
+      // ethers.utils.getAddress(address) returns the checksum format of an address
+      expect(ethers.utils.getAddress(authorAddress)).to.equal(up.address);
     })
 
-    it("Reverts when saving the same post hash twice", async function() {
-      await expect(callPost(postHash, jsonUrl, looksoPostValidator, keyManager)).to.be.reverted;
+    it("Emits the event with the correct postHash", async function() {
+      // Position 0 is the hash of the eventName, 1 is the postHash and 2 is the author
+      const _postHash = validatorEventTopic[1];
+      expect(_postHash).to.equal(postHash);
+    })
+
+    it("Emits event regardless of having emitted for that postHash before", async function() {
+      await expect(callPost(postHash, jsonUrl, looksoPostValidator, keyManager)).not.to.be.reverted;
     })
   })
 })

@@ -8,32 +8,25 @@ export async function deployUP(provider: JsonRpcProvider) {
         deployKey: (hre as any).userConfig.networks.hardhat.accounts[0].privateKey,
         chainId: (await provider.getNetwork()).chainId
     })
-
-    let deployedContracts = await  lspFactory.UniversalProfile.deploy(
-        {
-        controllerAddresses: [process.env.L16ADDRESS as string], // our EOA that will be controlling the UP
-        lsp3Profile: {
-            name: 'HardHat Test Profile',
-            description: 'Profile to test the LOOKSO Validator contract',
-            tags: ['Local Profile'],
-            links: [
+    let deployedContracts;
+    if (process.env.L16ADDRESS) {
+        deployedContracts = await lspFactory.UniversalProfile.deploy(
             {
-                title: 'My Website',
-                url: 'https://my-website.com',
-            },
-            ],
-        },
-        },
-
-        {
-            ERC725Account: {
-                deployProxy: false,
-            }, 
-            LSP1UniversalReceiverDelegate: {
-                deployProxy:false
-            }
-        }
-    );
-
+                controllerAddresses: [process.env.L16ADDRESS], // our EOA that will be controlling the UP
+                lsp3Profile: "ipfs://QmRsxZdtHrrLQo54mkakAr5e1w7C3xgpapYJiQbj4Pwysz"
+                },
+                {
+                    LSP0ERC725Account: {
+                        deployProxy: false,
+                    }, 
+                    LSP1UniversalReceiverDelegate: {
+                        deployProxy:false
+                    }
+                }
+        );
+    } else {
+        throw Error("UP controller not found upon deployment. Check the address from your Browser Extension and fill the .env constant L16ADDRESS");
+    }
+    
     return [deployedContracts.LSP0ERC725Account?.address, deployedContracts.LSP6KeyManager.address];
 }
