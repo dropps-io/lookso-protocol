@@ -18,7 +18,7 @@ contract LooksoPostValidator is Context {
 
     bytes32 public constant REGISTRY_KEY = keccak256("LSPXXSocialRegistry");
 
-    event newPost(bytes32 indexed postHash, address indexed author);
+    event NewPost(bytes32 indexed postHash, address indexed author);
 
     /**
     * @notice Universal Profile (message sender) makes a post
