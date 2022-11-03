@@ -111,6 +111,7 @@ describe("LooksoPostValidator", function() {
     // Deploy the Validator Timestamper Contract
     const LooksoPostValidator = await ethers.getContractFactory("LooksoPostValidator");
     looksoPostValidator = await LooksoPostValidator.deploy();
+    console.log(looksoPostValidator.address)
     // Grant the Validator access to the UP
 
     const erc725 = new ERC725(LSP6Schema as ERC725JSONSchema[], process.env.UPADDRESS, luksoProvider);
