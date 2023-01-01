@@ -50,13 +50,18 @@ The linked JSON file SHOULD have the following format:
   "LSPXXSocialRegistry": {
     "posts": [ // Messages authored by the profile. Includes original posts, comments and reposts.
       {
-        "url": "string", // The url in decentralized storage with the post content and metadata
-        "hash": "string" // The hash of the post object
+        "url": "String", // The url in decentralized storage with the post content and metadata
+        "hash": "Bytes32" // The hash of the post object
       },
       ...
     ],
     "follows": [ "Address", ... ], // UPs this account has subscribed.  Will compose the account's feed.
-    "likes": ["bytes32", ...], // The identifier (hash) of all the posts this account has liked
+    "likes": [
+      {
+        "url": "String", // The url in decentralized storage with the post content and metadata
+        "hash": "Bytes32" // The hash of the post object
+      }
+    ], // The identifier (hash) of all the posts this account has liked
   }
 }
 ```
@@ -85,14 +90,19 @@ A Profile Post can be an original message, a comment on another post or a repost
       "string",
       ...
     ],
-    "assets": [ // Media attached to a post
+    "medias": [ // Medias attached to a post
       {
         "hashFunction": "keccak256(bytes)",
         "hash": "string",
         "url": "string", 
         "fileType": "string"
       }
-    ], 
+    ],
+    "assets": [
+      "interface": "string" // Contract interface
+      "contract": "Address", // Address of the asset contract
+      "tokenId": "any" // Or null
+    ]
     "parentHash": "string", // or null. A post with a parent is a comment
     "childHash": "string", // or null. A post with a child is a repost
     "app": "string", // The platform that originated this post
@@ -101,7 +111,7 @@ A Profile Post can be an original message, a comment on another post or a repost
     "hashFunction": 'keccak256(bytes)',
     "hash": "string",
   }, 
-  "LSPXXProfilePostEOASignature": "string"
+  "LSPXXProfilePostEOASignature": "string" // or null
 }
 ```
 Below is an example of a post object:
@@ -120,12 +130,27 @@ Below is an example of a post object:
         "url": "https://dropps.io"
       }
     ],
-    "asset": {
-      "hashFunction": "keccak256(bytes)",
-      "hash": "0x813a0027c9201ccdec5324aa32ddf0e8b9400479662b6f243500a42f2f85d2eb",
-      "url": "ar://gkmVUoHE4Ay6ScIlgV4E7Fs1m13LfpAXSuwuRGRQbeA",
-      "fileType": "jpg"
-    },
+    "medias": 
+      [
+        {
+          "hashFunction": "keccak256(bytes)",
+          "hash": "0x813a0027c9201ccdec5324aa32ddf0e8b9400479662b6f243500a42f2f85d2eb",
+          "url": "ar://gkmVUoHE4Ay6ScIlgV4E7Fs1m13LfpAXSuwuRGRQbeA",
+          "fileType": "jpg"
+        }
+      ],
+    "assets":
+      [
+        {
+          "interface": "0x622e7a01",
+          "contract": "0x8cE5Aa1F67FbC9034720E7C9e1e1a841C46faC22",
+          "tokenId": "0x715f248956de7ce65e94d9d836bfead479f7e70d69b718d47bfe7b00e05b4fe4"
+        },
+        {
+          "interface": "0xda1f85e4",
+          "contract": "0xbC595d500b30aeb9b04e4D4360f84FdCb2910393"
+        }
+      ],
     "parentHash":"0xdc1812e317c6cf84760d59bda99517de5b5c5190fcf820713075430337805340",
     "childHash":""
   },
@@ -146,7 +171,8 @@ Let's breakdown the _LSPXXProfilePost_ attributes:
 * **nonce** is what makes a post unique. Otherwise, posts written by the same author with the same message would generate the same hash and collide in the validator storage. The transaction would then revert when someone tried posting the same content twice. Even if on different dates! We don't want that. Anyone has the right to just pass by and say "Goodmorning!" everyday.
 * **links** they can be used in the future to extend the standard.
 * **tags** they can be used in the future as hashtags.
-* **asset** A media file attached to the post. An image, video, or any other file type.
+* **medias** Media files attached to the post. Images, videos, or any other file type.
+* **assets** Digital assets attached to the post. LSP7, LSP8, ERC20, ERC721, ERC1155, etc.
 * **parentHash** If this post is a comment, the hash of the original post should go in here.
 * **childHash** If this post is a repost, the hash of the original post should go in here. 
 
