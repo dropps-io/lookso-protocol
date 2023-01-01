@@ -5,7 +5,7 @@ status: Draft
 type: Meta
 author: Samuel Videau <samuel@dropps.io>, António Pedro <antonio@dropps.io>
 created: 2022-07-26
-updated: 2022-08-24
+updated: 2023-01-01
 requires: ERC725Y, LSP2
 ---
 
