@@ -9,12 +9,11 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
 
 /**
-* @title LOOKSO post validator
+* @title LSPXX post validator
 * @notice A validator tailored for Universal Profiles and content publishing
-* @author https://lookso.io
 * @dev Writes to the Universal Profile key/value store
 */
-contract LooksoPostValidator is Context {
+contract LSPXXPostValidator is Context {
 
     bytes32 public constant REGISTRY_KEY = keccak256("LSPXXSocialRegistry");
 
@@ -22,16 +21,25 @@ contract LooksoPostValidator is Context {
 
     /**
     * @notice Universal Profile (message sender) makes a post
-    * @dev This contract must have permissions to write on the Universal Profile
-    * @param postHash Will be used as key in this contract's mapping
-    * @param jsonUrl Reference to the latest Social Media Record of the sender
+    * @param postHash will pushed in an event, with the _msgSender, in order to validate the author and the timestamp of the post
     */
-    function post(bytes32 postHash, bytes calldata jsonUrl) public {
-
+    function post(bytes32 postHash) public {
         // Save the timestamp as a blockchain event
         emit newPost(postHash, _msgSender());
-        
-        //// Verify sender supports the IERC725Y standard
+    }
+
+    /**
+    * @notice Universal Profile (message sender) makes a post
+    * @dev This contract must have permissions to write on the Universal Profile
+    * @param postHash will pushed in an event, with the _msgSender, in order to validate the author and the timestamp of the post
+    * @param jsonUrl Reference to the latest Social Media Record of the sender
+    */
+    function postWithJsonUrl(bytes32 postHash, bytes calldata jsonUrl) public {
+
+        // Save the timestamp as a blockchain event
+        post(postHash);
+
+        // Verify sender supports the IERC725Y standard
         require(ERC165Checker.supportsERC165(_msgSender()), "Sender must implement ERC165. A UP does.");
         require(ERC165Checker.supportsInterface(_msgSender(), _INTERFACEID_ERC725Y), "Sender must implement IERC725Y (key/value store). A UP does");
 
