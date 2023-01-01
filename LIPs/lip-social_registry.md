@@ -61,7 +61,13 @@ The linked JSON file SHOULD have the following format:
         "url": "String", // The url in decentralized storage with the post content and metadata
         "hash": "Bytes32" // The hash of the post object
       }
-    ], // The identifier (hash) of all the posts this account has liked
+    ], // The identifier (hash) of all the posts this account has liked,
+    "dislikes": [
+      {
+        "url": "String", // The url in decentralized storage with the post content and metadata
+        "hash": "Bytes32" // The hash of the post object
+      }
+    ], // The identifier (hash) of all the posts this account has disliked
   }
 }
 ```
