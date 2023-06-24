@@ -5,6 +5,9 @@ pragma solidity ^0.8.7;
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { IERC725Y } from "@erc725/smart-contracts/contracts/interfaces/IERC725Y.sol";
+import { ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
+import { OwnableUnset } from "@erc725/smart-contracts/contracts/custom/OwnableUnset.sol";
+import {_INTERFACEID_LSP20_CALL_VERIFICATION} from "@lukso/lsp-smart-contracts/contracts/LSP20CallVerification/LSP20Constants.sol";
 
 /**
 * @title LSP19 post validator
@@ -39,7 +42,22 @@ contract LSP19PostValidator is Context {
         // Save the timestamp as a blockchain event
         post(postHash, postUrl);
 
-        // Send the setData tx to the UP
-        IERC725Y(_msgSender()).setData(REGISTRY_KEY, registryJsonUrl);
+        // Verify sender supports the IERC725Y standard
+        require(ERC165Checker.supportsERC165(_msgSender()), "Sender must implement ERC165. A UP does.");
+        bool supportsLSP20 = ERC165Checker.supportsInterface(_msgSender(), _INTERFACEID_LSP20_CALL_VERIFICATION);
+
+        if (supportsLSP20) {
+            // Send the setData tx to the UP
+            IERC725Y(_msgSender()).setData(REGISTRY_KEY, registryJsonUrl);
+        } else {
+            // Create the tx to update the registry reference in the UP
+            bytes memory encodedCall = abi.encodeWithSelector(
+                bytes4(keccak256(bytes("setData(bytes32,bytes)"))), //function.selector
+                REGISTRY_KEY, registryJsonUrl
+            );
+
+            // Send the setData tx to the UP
+            ILSP6KeyManager( OwnableUnset(_msgSender()).owner() ).execute(encodedCall);
+        }
     }
 }

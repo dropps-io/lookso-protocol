@@ -139,9 +139,11 @@ The `LSP19ProfilePostSignature` property is optional and depends on the use case
       }
     ],
     "assets": [
-      "interface": "string" // Contract interface
-      "contract": "Address", // Address of the asset contract
-      "tokenId": "any" // Or null
+      {
+        "interface": "string" // Contract interface
+        "contract": "Address", // Address of the asset contract
+        "tokenId": "String" // Or null
+      }
     ]
     "parentPost": {
       "url": "string",
