@@ -4,22 +4,24 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx hardhat test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "dotenv": "^16.0.2",
+    "hardhat-contract-sizer": "^2.10.0",
     "remove": "^0.1.5"
   },
   "devDependencies": {
-    "@erc725/erc725.js": "^0.15.0",
+    "@erc725/erc725.js": "^0.17.2",
     "@lukso/lsp-factory.js": "^2.4.0",
-    "@lukso/lsp-smart-contracts": "^0.6.2",
-    "@openzeppelin/contracts": "^4.7.3",
+    "@lukso/lsp-smart-contracts": "^0.10.0",
+    "@openzeppelin/contracts": "^4.9.2",
     "hardhat": "^2.10.2",
     "isomorphic-fetch": "^3.0.0",
     "web3": "^1.8.0"

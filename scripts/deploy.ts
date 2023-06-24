@@ -1,13 +1,13 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const [owner, otherAccount] = await ethers.getSigners();
-  const LooksoValidator = await ethers.getContractFactory("LooksoPostValidator");
-  const looksoValidator = await LooksoValidator.deploy(owner.address);
+  console.log("Deploying LSP19PostValidator");
+  const LooksoValidator = await ethers.getContractFactory("LSP19PostValidator");
+  const looksoValidator = await LooksoValidator.deploy();
 
   await looksoValidator.deployed();
 
-  console.log(looksoValidator.address);
+  console.log(`Contract deployed at the address: ${looksoValidator.address}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
